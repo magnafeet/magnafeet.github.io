@@ -1,0 +1,175 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>
+        Base Layers
+    </title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.15/"></script>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/SceneView",
+            "esri/layers/FeatureLayer",
+            "esri/widgets/Legend",
+            "esri/renderers/SimpleRenderer",
+            "esri/views/MapView"
+
+        ], function(Map, SceneView, FeatureLayer, Legend, SimpleRenderer, MapView) {
+
+            var buildingRenderer = {
+                type: "simple", // autocasts as new UniqueValueRenderer()
+                symbol: {
+                    type: "polygon-3d", // autocasts as new PolygonSymbol3D()
+                    symbolLayers: [{
+                        type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
+                        material: {
+                            color: [244, 247, 134]
+                        },
+                        edges: {
+                            type: "solid",
+                            color: [50, 50, 50, 0.5],
+                            size: .5
+                        }
+                    }]
+                },
+
+                visualVariables: [{
+                    type: "size",
+                    field: "Roof",
+                    //valueUnit: "px" // Converts and extrudes all data values in feet
+                    valueUnit: "feet"
+                }]
+            };
+
+            var parcelRenderer = {
+                    type: "simple", // autocasts as new UniqueValueRenderer()
+                    symbol: {
+                        type: "polygon-3d", // autocasts as new PolygonSymbol3D()
+                        symbolLayers: [{
+                            type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
+                            material: {
+                                color: [244, 247, 134, 0.1]
+                            },
+                            edges: {
+                                type: "solid",
+                                color: [50, 50, 50, 0.5],
+                                size: .5
+                            }
+                        }]
+                    },
+
+                    visualVariables: [{
+                        type: "size",
+                        field: "AssessedVa",
+                        //valueUnit: "px" // Converts and extrudes all data values in feet
+                        stops: [{
+                            value: 5000,
+                            size: "1px"
+                        }, {
+                            value: 1000000,
+                            size: "10000px"
+                        }]
+                    }]
+
+                }
+                // Set the renderer on the layer
+            var parcelsLayer = new FeatureLayer({
+                url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/parcel_data_april_2018_shp/FeatureServer",
+                renderer: parcelRenderer,
+                popupTemplate: {
+                    // autocasts as new PopupTemplate()
+                    title: "{LandUse}",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [{
+                            fieldName: "FullName",
+                            label: "Address"
+                        }, {
+                            fieldName: "LandUse",
+                            label: "Type"
+                        }, {
+                            fieldName: "AssessedVa",
+                            label: "Assessed Value"
+                        }]
+                    }]
+                },
+                outFields: ["FullName", "LandUse", "AssessedVa"],
+                definitionExpression: "LandUse = 'Single Family' OR LandUse = 'Two Family'" // show only buildings with height
+            });
+            var buildingsLayer = new FeatureLayer({
+                url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/buildings_for_web/FeatureServer",
+                renderer: buildingRenderer,
+                elevationInfo: "on-the-ground"
+                    /*popupTemplate: {
+                        // autocasts as new PopupTemplate()
+                        title: "{LandUse}",
+                        content: [{
+                            type: "fields",
+                            fieldInfos: [{
+                                fieldName: "FullName",
+                                label: "Address"
+                            }, {
+                                fieldName: "LandUse",
+                                label: "Type"
+                            }, {
+                                fieldName: "AssessedVa",
+                                label: "Assessed Value"
+                            }]
+                        }]
+                    },*/
+
+
+            });
+
+            var map = new Map({
+                basemap: "gray-vector",
+                ground: "world-elevation",
+
+            });
+            map.add(buildingsLayer);
+            map.add(parcelsLayer);
+            var view = new SceneView({
+                container: "viewDiv",
+                map: map,
+                camera: {
+                    position: {
+                        x: -76.1314379, //long
+                        y: 43.037945, //lat
+                        z: 2000,
+
+                    },
+                    heading: 300,
+                    tilt: 15
+                }
+            });
+
+            var legend = new Legend({
+                view: view
+            });
+
+            view.ui.add(legend, "bottom-right");
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+
+</html>
