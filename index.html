@@ -11,165 +11,156 @@
     <script src="https://js.arcgis.com/4.15/"></script>
 
     <style>
+
+    </style>
+    <style>
         html,
-        body,
-        #viewDiv {
+        body {
             padding: 0;
             margin: 0;
             height: 100%;
             width: 100%;
         }
+        
+        #viewDiv {
+            position: absolute;
+            left: 0;
+            right: 33%;
+            top: 0;
+            bottom: 0;
+            height: 100%;
+        }
+        
+        #panel {
+            background-color: #f5f5f5;
+            position: absolute;
+            right: 0;
+            height: 100%;
+            width: 33%;
+            font-size: 12px;
+            overflow: scroll;
+        }
+        
+        #buttonsDiv {
+            flex-direction: row;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: fit-content;
+            margin-top: 10px;
+        }
+        
+        .title {
+            font-weight: bold;
+            color: #0079c1;
+        }
+        
+        .container {
+            flex-direction: column;
+            flex: 3;
+            flex-wrap: wrap;
+            background-color: white;
+            color: #323232;
+            margin: 10px;
+            padding: 5px;
+            border-bottom: 1px solid rgba(50, 50, 50, 0.25);
+        }
+        
+        #scroll-through {
+            height: 300px;
+            overflow: scroll;
+        }
+        
+        #one {
+            color: red;
+        }
+        
+        #two {
+            color: blue;
+        }
+        
+        #three {
+            color: green;
+        }
+        
+        .event,
+        .property {
+            transition: background-color 0.5s ease-out;
+            padding-bottom: 2px;
+            opacity: 0.2;
+        }
+        
+        .active {
+            opacity: 1;
+            background-color: #99ccff;
+        }
+        
+        .inactive {
+            opacity: 1;
+            background-color: white;
+        }
     </style>
-
-    <script>
-        require([
-            "esri/Map",
-            "esri/views/SceneView",
-            "esri/layers/FeatureLayer",
-            "esri/widgets/Legend",
-            "esri/renderers/SimpleRenderer",
-            "esri/views/MapView"
-
-        ], function(Map, SceneView, FeatureLayer, Legend, SimpleRenderer, MapView) {
-
-            var buildingRenderer = {
-                type: "simple", // autocasts as new UniqueValueRenderer()
-                symbol: {
-                    type: "polygon-3d", // autocasts as new PolygonSymbol3D()
-                    symbolLayers: [{
-                        type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
-                        material: {
-                            color: [244, 247, 134]
-                        },
-                        edges: {
-                            type: "solid",
-                            color: [50, 50, 50, 0.5],
-                            size: .5
-                        }
-                    }]
-                },
-
-                visualVariables: [{
-                    type: "size",
-                    field: "Roof",
-                    //valueUnit: "px" // Converts and extrudes all data values in feet
-                    valueUnit: "feet"
-                }]
-            };
-
-            var parcelRenderer = {
-                    type: "simple", // autocasts as new UniqueValueRenderer()
-                    symbol: {
-                        type: "polygon-3d", // autocasts as new PolygonSymbol3D()
-                        symbolLayers: [{
-                            type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
-                            material: {
-                                color: [244, 247, 134, 0.1]
-                            },
-                            edges: {
-                                type: "solid",
-                                color: [50, 50, 50, 0.5],
-                                size: .5
-                            }
-                        }]
-                    },
-
-                    visualVariables: [{
-                        type: "size",
-                        field: "AssessedVa",
-                        //valueUnit: "px" // Converts and extrudes all data values in feet
-                        stops: [{
-                            value: 5000,
-                            size: "1px"
-                        }, {
-                            value: 1000000,
-                            size: "10000px"
-                        }]
-                    }]
-
-                }
-                // Set the renderer on the layer
-            var parcelsLayer = new FeatureLayer({
-                url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/parcel_data_april_2018_shp/FeatureServer",
-                renderer: parcelRenderer,
-                popupTemplate: {
-                    // autocasts as new PopupTemplate()
-                    title: "{LandUse}",
-                    content: [{
-                        type: "fields",
-                        fieldInfos: [{
-                            fieldName: "FullName",
-                            label: "Address"
-                        }, {
-                            fieldName: "LandUse",
-                            label: "Type"
-                        }, {
-                            fieldName: "AssessedVa",
-                            label: "Assessed Value"
-                        }]
-                    }]
-                },
-                outFields: ["FullName", "LandUse", "AssessedVa"],
-                definitionExpression: "LandUse = 'Single Family' OR LandUse = 'Two Family'" // show only buildings with height
-            });
-            var buildingsLayer = new FeatureLayer({
-                url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/buildings_for_web/FeatureServer",
-                renderer: buildingRenderer,
-                elevationInfo: "on-the-ground"
-                    /*popupTemplate: {
-                        // autocasts as new PopupTemplate()
-                        title: "{LandUse}",
-                        content: [{
-                            type: "fields",
-                            fieldInfos: [{
-                                fieldName: "FullName",
-                                label: "Address"
-                            }, {
-                                fieldName: "LandUse",
-                                label: "Type"
-                            }, {
-                                fieldName: "AssessedVa",
-                                label: "Assessed Value"
-                            }]
-                        }]
-                    },*/
-
-
-            });
-
-            var map = new Map({
-                basemap: "gray-vector",
-                ground: "world-elevation",
-
-            });
-            map.add(buildingsLayer);
-            map.add(parcelsLayer);
-            var view = new SceneView({
-                container: "viewDiv",
-                map: map,
-                camera: {
-                    position: {
-                        x: -76.1314379, //long
-                        y: 43.037945, //lat
-                        z: 2000,
-
-                    },
-                    heading: 300,
-                    tilt: 15
-                }
-            });
-
-            var legend = new Legend({
-                view: view
-            });
-
-            view.ui.add(legend, "bottom-right");
-        });
+    <script src='scripts/map.js'>
     </script>
 </head>
 
 <body>
+    <div id='mapContainer'></div>
     <div id="viewDiv"></div>
+
+    <div id='panel' class='esri-widget'>
+        <div id='buttonsDiv'>
+            <button id='closeIn' title='Building Scale'>In</button>
+            <button id='closeOut' title='Urban Scale'>Out</button>
+            <button id='nope'>Nope</button>
+        </div>
+        <div id='scroll-through' class="container">
+            <p>
+                <b>This is a demonstration of how text can be used to guide a viewer through map updates. Just <i>hover your mouse</i> on top of the text.</b> Several maps can be blended together seamlesssly, in one frame. Lorem ipsum dolor sit amet,
+                vix ad vulputate moderatius, te eos elit dicat principes. An nibh tollit deleniti sea. Falli epicurei mel cu, cu aperiri denique usu. Sumo veri splendide ad pro, minimum delicata cum et, id libris malorum consulatu vis. Cu sea civibus
+                nostrum mediocrem.Lorem ipsum dolor sit amet, vix ad vulputate moderatius, te eos elit dicat principes. An nibh tollit deleniti sea. Falli epicurei mel cu, cu aperiri denique usu. Sumo veri splendide ad pro, minimum delicata cum et, id
+                libris malorum consulatu vis. Cu sea civibus nostrum mediocrem.Lorem ipsum dolor sit amet, vix ad vulputate moderatius, te eos elit dicat principes. An nibh tollit deleniti sea. Falli epicurei mel cu, cu aperiri denique usu. Sumo veri
+                splendide ad pro, minimum delicata cum et, id libris malorum consulatu vis. Cu sea civibus nostrum mediocrem.
+            </p>
+            <p id='one'><b>We intend to begin on a small building scale, using hourly energy data to explain the impact that building retrofits can have.</b> Lorem ipsum dolor sit amet, has essent assentior ne. Graece insolens in est, utamur volumus sed id. Eos in
+                habeo tantas saperet. Ad duo magna zril luptatum, phaedrum platonem evertitur pri ad. Partem placerat electram in sit, an nam virtute alienum. Cu mei delicata perpetua pericula, ad eum harum putant delenit. Eu quando quaestio repudiare
+                usu, his posse liber constituam ex. Et eum timeam appareat. Sea omnis maiestatis reprimique ne. Praesent prodesset dissentias an sea, ad ridens inermis ullamcorper mei. Porro ipsum simul in nam. Alienum eligendi mea cu, et suas ullum oblique
+                pro. Duo tale eligendi laboramus et, summo possim disputationi mel ut. Te iusto nullam euismod eam. Cum ei sapientem voluptaria, no postea definitionem quo. Vel doming feugiat expetenda te, ne has enim eruditi. Id quo utroque ancillae,
+                eos singulis repudiare dissentiet cu. Eos tale repudiandae ea, eu mel cetero verterem persequeris. Mei an justo impetus. Ut mea simul persecuti, at modus consetetur repudiandae quo, suas postulant usu ei. Animal dignissim referrentur cu
+                sed. Nec unum aeque quaestio ei. Has eu cibo primis. Virtute vivendum ullamcorper et quo, vel te cibo errem iriure. Ea etiam cetero per, mnesarchum signiferumque cu vim, at oportere volutpat eos.</p>
+            <p id='two'>
+                <b>A second stage would expand to the urban scale.</b> Lorem ipsum dolor sit amet, has essent assentior ne. Graece insolens in est, utamur volumus sed id. Eos in habeo tantas saperet. Ad duo magna zril luptatum, phaedrum platonem evertitur
+                pri ad. Partem placerat electram in sit, an nam virtute alienum. Cu mei delicata perpetua pericula, ad eum harum putant delenit. Eu quando quaestio repudiare usu, his posse liber constituam ex. Et eum timeam appareat. Sea omnis maiestatis
+                reprimique ne. Praesent prodesset dissentias an sea, ad ridens inermis ullamcorper mei. Porro ipsum simul in nam. Alienum eligendi mea cu, et suas ullum oblique pro. Duo tale eligendi laboramus et, summo possim disputationi mel ut. Te
+                iusto nullam euismod eam. Cum ei sapientem voluptaria, no postea definitionem quo. Vel doming feugiat expetenda te, ne has enim eruditi. Id quo utroque ancillae, eos singulis repudiare dissentiet cu. Eos tale repudiandae ea, eu mel cetero
+                verterem persequeris. Mei an justo impetus. Ut mea simul persecuti, at modus consetetur repudiandae quo, suas postulant usu ei. Animal dignissim referrentur cu sed. Nec unum aeque quaestio ei. Has eu cibo primis. Virtute vivendum ullamcorper
+                et quo, vel te cibo errem iriure. Ea etiam cetero per, mnesarchum signiferumque cu vim, at oportere volutpat eos.
+            </p>
+            <p id='three'>
+                <b>At this point, free movement would be available.</b> Lorem ipsum dolor sit amet, has essent assentior ne. Graece insolens in est, utamur volumus sed id. Eos in habeo tantas saperet. Ad duo magna zril luptatum, phaedrum platonem evertitur
+                pri ad. Partem placerat electram in sit, an nam virtute alienum. Cu mei delicata perpetua pericula, ad eum harum putant delenit. Eu quando quaestio repudiare usu, his posse liber constituam ex. Et eum timeam appareat. Sea omnis maiestatis
+                reprimique ne. Praesent prodesset dissentias an sea, ad ridens inermis ullamcorper mei. Porro ipsum simul in nam. Alienum eligendi mea cu, et suas ullum oblique pro. Duo tale eligendi laboramus et, summo possim disputationi mel ut. Te
+                iusto nullam euismod eam. Cum ei sapientem voluptaria, no postea definitionem quo. Vel doming feugiat expetenda te, ne has enim eruditi. Id quo utroque ancillae, eos singulis repudiare dissentiet cu. Eos tale repudiandae ea, eu mel cetero
+                verterem persequeris. Mei an justo impetus. Ut mea simul persecuti, at modus consetetur repudiandae quo, suas postulant usu ei. Animal dignissim referrentur cu sed. Nec unum aeque quaestio ei. Has eu cibo primis. Virtute vivendum ullamcorper
+                et quo, vel te cibo errem iriure. Ea etiam cetero per, mnesarchum signiferumque cu vim, at oportere volutpat eos.
+            </p>
+        </div>
+        <div id='subjects'></div>
+        <div id='key'></div>
+        <div id="events" class="container">
+            <!--<button type='button' class='collapsible'>Toggle</button>-->
+            <a class="title">
+                Class View Events:
+            </a>
+        </div>
+        <div id="properties" class="container">
+            <!--<button type='button' class='collapsible'>Toggle</button>-->
+            <a class="title">
+                Class View Properties:
+            </a>
+        </div>
+
+    </div>
 </body>
 
-</html>
+</html>589.0138
