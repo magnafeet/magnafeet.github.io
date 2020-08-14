@@ -10,13 +10,44 @@ require([
 ], function(Map, SceneView, FeatureLayer, Legend, SimpleRenderer, MapView, VectorTileLayer) {
 
 
+    let lyrs = document.querySelector('#layers')
+
+    const lyrItem = document.querySelector('template')
+
+    function addLyrToggle(layer) {
+        lyrName = layer.title;
+        let container = document.createElement('div');
+        let vis = layer.visible ? 'checked' : null;
+        console.log(vis)
+        container.innerHTML =
+            `
+        <input type = 'checkbox' ${vis} id = ${lyrName} name = ${lyrName}>
+        <label for = '${lyrName}'>${lyrName}</label>
+        `
+        lyrs.append(container);
+        container.addEventListener('change', (event) => {
+            layer.visible = event.target.checked;
+        })
+        if (lyrName == 'Instantaneous position of cars (sample day)') {
+            let info = document.querySelector('#info')
+            container.addEventListener('change', (event) => {
+                if (event.target.checked) { info.style.display = 'block'; } else {
+                    info.style.display = 'none';
+                }
+            })
+
+        }
+    }
+
 
 
     let vectLayer = new VectorTileLayer({
         url: './styles/root.json'
     });
+
     let codeViolations = new FeatureLayer({
         url: 'https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/code/FeatureServer',
+        title: 'Building Code Violations',
         renderer: {
             type: 'simple',
             symbol: {
@@ -59,6 +90,7 @@ require([
         },
 
         visualVariables: [{
+            legendOptions: { 'title': 'Total Cost of Electricity (Yearly)' },
             type: "size",
             field: "MEAN_Z", //Currently only computed for western half of Onondaga County.
             //valueUnit: "px" // Converts and extrudes all data values in feet
@@ -88,26 +120,39 @@ require([
                 outline: { width: 0 }
             },
             visualVariables: [{
-                type: "color",
-                field: "AssessedVa",
-                //valueUnit: "px" // Converts and extrudes all data values in feet
-                stops: [{
-                        value: 0,
-                        color: "#e8e7c5",
-                        opacity: 0.2
-                    },
-                    {
-                        value: 1000000,
-                        color: "#ff8575",
-                        opacity: 0.2
-                    }
-                ]
-            }]
+                    type: "color",
+                    legendOptions: { 'title': 'Assessed Value' },
+                    field: "AssessedVa",
+                    //valueUnit: "px" // Converts and extrudes all data values in feet
+                    stops: [{
+                            value: 0,
+                            color: "#e8e7c5",
+                            opacity: 0.2
+                        },
+                        {
+                            value: 1000000,
+                            color: "#ff8575",
+                            opacity: 0.2
+                        }
+                    ]
+                },
+                {
+                    type: "opacity",
+                    field: "Shape_Are",
+                    legendOptions: { 'showLegend': false },
+                    // maps data values to opacity values
+                    stops: [
+                        { value: 0, opacity: 0.1 },
+                        { value: 1400000, opacity: 0.5 }
+                    ]
+                }
+            ]
 
         }
         // Set the renderer on the layer
     var parcelsLayer = new FeatureLayer({
         url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/parcel_data_april_2018_shp/FeatureServer",
+        title: 'Tax Parcels',
         renderer: parcelRenderer,
         elevationInfo: "on-the-ground",
         popupTemplate: {
@@ -121,8 +166,10 @@ require([
             }],
         }
     });
+
     var buildingsLayer = new FeatureLayer({
         url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/buildings_energy/FeatureServer",
+        title: 'Buildings',
         renderer: buildingRenderer,
         elevationInfo: "on-the-ground",
         popupTemplate: {
@@ -148,6 +195,96 @@ require([
 
 
     });
+    var spendLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/spending/FeatureServer",
+        title: 'Yearly Spending Index (Electricity)',
+        renderer: {
+            type: "simple", // autocasts as new UniqueValueRenderer()
+            symbol: {
+                type: "simple-fill", // autocasts as new PolygonSymbol3D()
+                outline: { width: 0 }
+            },
+            visualVariables: [{
+                type: "color",
+                field: "X3063_I",
+                legendOptions: { 'title': 'Electricity index' },
+                //valueUnit: "px" // Converts and extrudes all data values in feet
+                stops: [{
+                        value: 0,
+                        color: "#e8e7c5",
+                        opacity: 0.1
+                    },
+                    {
+                        value: 100,
+                        color: "#ff8575",
+                        opacity: 0.1
+                    }
+                ]
+            }, {
+                type: "opacity",
+                field: "X3063_I",
+                legendOptions: { 'showLegend': false },
+                // maps data values to opacity values
+                stops: [
+                    { value: 0, opacity: 0.1 },
+                    { value: 100, opacity: 0.5 }
+                ]
+            }]
+
+        },
+        elevationInfo: "on-the-ground",
+        popupTemplate: {
+            // autocasts as new PopupTemplate()
+            title: "Spending by Census Tract",
+            content: [{
+                type: "fields",
+                fieldInfos: [{
+                        fieldName: "TOTHH_CY",
+                        label: "Total Households"
+                    },
+                    {
+                        fieldName: "TOTPOP_CY",
+                        label: "TOtal Population"
+                    }, {
+                        fieldName: "X3063_I",
+                        label: "Elecricity Index"
+                    },
+                    {
+                        fieldName: "X3063_A",
+                        label: "Elecricity Average"
+                    }, {
+                        fieldName: "X1002_I",
+                        label: "Food Index"
+                    },
+                    {
+                        fieldName: "X1002_A",
+                        label: "Food Average"
+                    }
+                ]
+            }]
+        },
+        visible: true
+
+    });
+
+    var carLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/uDTUpUPbk8X8mXwl/arcgis/rest/services/car_count_air_pollution/FeatureServer",
+        title: 'Instantaneous position of cars (sample day)',
+        renderer: {
+            type: 'simple',
+            symbol: {
+                type: 'simple-marker',
+                size: 3,
+                color: [255, 0, 255],
+                opacity: 0.2,
+                outline: null
+            }
+        },
+        elevationInfo: { mode: "relativeToGround", offset: 5, unit: 'foot' },
+        visible: false
+
+    });
+
 
     var map = new Map({
         //basemap: "gray-vector",
@@ -155,10 +292,11 @@ require([
         ground: "world-elevation",
 
     });
-    map.add(codeViolations);
-    map.add(buildingsLayer);
-    map.add(parcelsLayer);
-    map.add(vectLayer);
+    map.add(vectLayer)
+    let layerList = [codeViolations, buildingsLayer, parcelsLayer, carLayer, spendLayer];
+    map.addMany(layerList)
+    layerList.forEach(el => addLyrToggle(el))
+
     //map.add(parcelsLayer);
     let OnondagaExtent = {}
     let viewIn = new SceneView({
@@ -177,6 +315,7 @@ require([
             tilt: 15
         }
     });
+
     const properties = [
         "focused",
         "interacting",
@@ -367,8 +506,8 @@ require([
         view: viewIn,
         layout: 'side-by-side'
     });
-    view.ui.add(legend, "bottom-right");
-
+    //viewIn.ui.add(legend, "bottom-right"); 
+    //Source of sync err
     /*let collapsibles = document.querySelectorAll('button.collapsible');
     //collapsibles.forEach(el => console.log(el))
     console.log(collapsibles)
@@ -384,4 +523,26 @@ require([
             }
         });
     })*/
+    document.querySelector('#events-toggle').addEventListener('change', function(event) {
+        let evts = document.querySelectorAll('.event');
+        let chk = event.target.checked;
+        if (!chk) {
+            evts.forEach((el) => el.style.display = 'none')
+
+        } else {
+            evts.forEach((el) => el.style.display = 'block')
+        }
+
+    });
+    document.querySelector('#props-toggle').addEventListener('change', function(event) {
+        let evts = document.querySelectorAll('.property');
+        let chk = event.target.checked;
+        if (!chk) {
+            evts.forEach((el) => el.style.display = 'none')
+
+        } else {
+            evts.forEach((el) => el.style.display = 'block')
+        }
+
+    });
 });
