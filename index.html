@@ -30,12 +30,29 @@
             display: none;
         }
         
+        .esri-view .esri-view-surface--inset-outline:focus::after {
+            outline: none;
+        }
+        
+        *::-webkit-scrollbar-thumb {
+            background-color: red;
+        }
+        
+        *::-webkit-scrollbar-button {
+            background-color: red;
+        }
+        
         html,
         body {
             padding: 0;
             margin: 0;
             height: 100%;
             width: 100%;
+        }
+        
+        input[type="checkbox"] {
+            background-color: #999;
+            outline-color: red;
         }
         
         #viewDiv {
@@ -47,14 +64,30 @@
             height: 100%;
         }
         
+        *:focus::after {
+            outline-color: red;
+        }
+        
+        *:active {
+            outline-color: red;
+        }
+        
+        *:hover {
+            outline-color: red;
+        }
+        
+        * {
+            border: none;
+        }
+        
         #panel {
-            background-color: #f5f5f5;
+            background-color: white;
             position: absolute;
             right: 0;
             height: 100%;
             width: 33%;
             font-size: 12px;
-            overflow: scroll;
+            overflow-y: scroll;
         }
         
         .buttonsDiv {
@@ -101,7 +134,7 @@
         
         #scroll-through {
             height: 300px;
-            overflow: scroll;
+            overflow-y: scroll;
         }
         
         #one {
